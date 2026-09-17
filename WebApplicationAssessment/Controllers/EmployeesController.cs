@@ -17,9 +17,16 @@ namespace WebApplicationAssessment.Controllers
 
         public async Task<IActionResult> Index()
         {
-
-            var employees = await _empRepository.GetAllEmployeesAsync();
-            return View(employees);
+            try
+            {
+                var employees = await _empRepository.GetAllEmployeesAsync();
+                return View(employees);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Unable to load employee list. Please try again later.";
+                return View(Enumerable.Empty<Employee>());
+            }
         }
 
         #region Create
@@ -29,11 +36,19 @@ namespace WebApplicationAssessment.Controllers
         /// <returns></returns>
         public async Task<IActionResult> Create()
         {
-            var viewModel = new EmployeeFormViewModel
+            try
             {
-                AvailableSkills = await GetAvailableSkillsAsync()
-            };
-            return View(viewModel);
+                var viewModel = new EmployeeFormViewModel
+                {
+                    AvailableSkills = await GetAvailableSkillsAsync()
+                };
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Unable to load form options. Please try again.";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         /// <summary>
@@ -45,26 +60,34 @@ namespace WebApplicationAssessment.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(EmployeeFormViewModel model)
         {
-            if (ModelState.IsValid)
+            try
             {
-                bool exists = await _empRepository.EmployeeExistsAsync(model.DateOfBirth, model.Phone);
-                if (exists)
+                throw new NotImplementedException("The Create method is not yet implemented.");
+                if (ModelState.IsValid)
                 {
-                    ViewBag.DuplicateMessage = "An employee with the same Phone Number and Date of Birth already exists.";
-                    model.AvailableSkills = await GetAvailableSkillsAsync();
-                    return View(model);
+                    bool exists = await _empRepository.EmployeeExistsAsync(model.DateOfBirth, model.Phone);
+                    if (exists)
+                    {
+                        ViewBag.DuplicateMessage = "An employee with the same Phone Number and Date of Birth already exists.";
+                        model.AvailableSkills = await GetAvailableSkillsAsync();
+                        return View(model);
+                    }
+
+                    var employee = new Employee
+                    {
+                        FirstName = model.FirstName,
+                        LastName = model.LastName,
+                        DateOfBirth = model.DateOfBirth,
+                        Phone = model.Phone
+                    };
+
+                    await _empRepository.AddEmployeeAsync(employee, model.SelectedSkillIds);
+                    return RedirectToAction(nameof(Index));
                 }
-
-                var employee = new Employee
-                {
-                    FirstName = model.FirstName,
-                    LastName = model.LastName,
-                    DateOfBirth = model.DateOfBirth,
-                    Phone = model.Phone
-                };
-
-                await _empRepository.AddEmployeeAsync(employee, model.SelectedSkillIds);
-                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "An unexpected error occurred while saving the employee record. Please try again.";
             }
 
             model.AvailableSkills = await GetAvailableSkillsAsync();
@@ -82,21 +105,29 @@ namespace WebApplicationAssessment.Controllers
         {
             if (id == null) return NotFound();
 
-            var employee = await _empRepository.GetEmployeeByIdAsync(id.Value);
-            if (employee == null) return NotFound();
-
-            var viewModel = new EmployeeFormViewModel
+            try
             {
-                Id = employee.Id,
-                FirstName = employee.FirstName,
-                LastName = employee.LastName,
-                DateOfBirth = employee.DateOfBirth,
-                Phone = employee.Phone,
-                SelectedSkillIds = employee.Skills.Select(s => s.Id).ToList(),
-                AvailableSkills = await GetAvailableSkillsAsync()
-            };
+                var employee = await _empRepository.GetEmployeeByIdAsync(id.Value);
+                if (employee == null) return NotFound();
 
-            return View(viewModel);
+                var viewModel = new EmployeeFormViewModel
+                {
+                    Id = employee.Id,
+                    FirstName = employee.FirstName,
+                    LastName = employee.LastName,
+                    DateOfBirth = employee.DateOfBirth,
+                    Phone = employee.Phone,
+                    SelectedSkillIds = employee.Skills.Select(s => s.Id).ToList(),
+                    AvailableSkills = await GetAvailableSkillsAsync()
+                };
+
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Unable to load employee details. Please try again.";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         /// <summary>
@@ -111,27 +142,34 @@ namespace WebApplicationAssessment.Controllers
         {
             if (id != model.Id) return NotFound();
 
-            if (ModelState.IsValid)
+            try
             {
-                bool exists = await _empRepository.EmployeeExistsAsync(model.DateOfBirth, model.Phone, model.Id);
-                if (exists)
+                if (ModelState.IsValid)
                 {
-                    ViewBag.DuplicateMessage = "Another employee with the same Phone Number and Date of Birth already exists.";
-                    model.AvailableSkills = await GetAvailableSkillsAsync();
-                    return View(model);
+                    bool exists = await _empRepository.EmployeeExistsAsync(model.DateOfBirth, model.Phone, model.Id);
+                    if (exists)
+                    {
+                        ViewBag.DuplicateMessage = "Another employee with the same Phone Number and Date of Birth already exists.";
+                        model.AvailableSkills = await GetAvailableSkillsAsync();
+                        return View(model);
+                    }
+
+                    var employeeToUpdate = await _empRepository.GetEmployeeByIdAsync(id);
+                    if (employeeToUpdate == null) return NotFound();
+
+                    employeeToUpdate.FirstName = model.FirstName;
+                    employeeToUpdate.LastName = model.LastName;
+                    employeeToUpdate.DateOfBirth = model.DateOfBirth;
+                    employeeToUpdate.Phone = model.Phone;
+
+                    await _empRepository.UpdateEmployeeAsync(employeeToUpdate, model.SelectedSkillIds);
+
+                    return RedirectToAction(nameof(Index));
                 }
-
-                var employeeToUpdate = await _empRepository.GetEmployeeByIdAsync(id);
-                if (employeeToUpdate == null) return NotFound();
-
-                employeeToUpdate.FirstName = model.FirstName;
-                employeeToUpdate.LastName = model.LastName;
-                employeeToUpdate.DateOfBirth = model.DateOfBirth;
-                employeeToUpdate.Phone = model.Phone;
-
-                await _empRepository.UpdateEmployeeAsync(employeeToUpdate, model.SelectedSkillIds);
-
-                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"]  = "An unexpected error occurred while updating the employee. Please try again.";
             }
 
             model.AvailableSkills = await GetAvailableSkillsAsync();
@@ -149,7 +187,15 @@ namespace WebApplicationAssessment.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            await _empRepository.DeleteEmployeeAsync(id);
+            try
+            {
+                await _empRepository.DeleteEmployeeAsync(id);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "An error occurred while deleting the employee. Please try again.";
+            }
+
             return RedirectToAction(nameof(Index));
         }
         #endregion
