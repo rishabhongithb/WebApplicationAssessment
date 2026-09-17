@@ -62,7 +62,6 @@ namespace WebApplicationAssessment.Controllers
         {
             try
             {
-                throw new NotImplementedException("The Create method is not yet implemented.");
                 if (ModelState.IsValid)
                 {
                     bool exists = await _empRepository.EmployeeExistsAsync(model.DateOfBirth, model.Phone);
