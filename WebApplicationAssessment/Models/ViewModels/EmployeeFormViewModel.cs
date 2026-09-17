@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
+using WebApplicationAssessment.Validation;
 
 namespace WebApplicationAssessment.Models.ViewModels
 {
@@ -18,6 +19,7 @@ namespace WebApplicationAssessment.Models.ViewModels
         [Required(ErrorMessage = "Date of birth is required.")]
         [DataType(DataType.Date)]
         [Display(Name = "Date of Birth")]
+        [PastDate]
         public DateTime DateOfBirth { get; set; } = DateTime.Today.AddYears(-20);
 
         [Required(ErrorMessage = "Phone number is required.")]
