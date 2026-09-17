@@ -96,7 +96,7 @@ This approach:
 
 ## Validation Implementation
 
-Data validation is implemented using **Data Annotations**.
+Data validation is implemented using **Data Annotations** and **Custom Data Annotations**.
 
 The model-level validation includes:
 
@@ -145,4 +145,4 @@ This would improve:
 
 Implement pagination and filtering when retrieving employees.
 
-This would improve API performance and reduce the amount of data returned when working with large employee datasets.
+This would improve List or Grid performance and reduce the amount of data returned when working with large employee datasets.
