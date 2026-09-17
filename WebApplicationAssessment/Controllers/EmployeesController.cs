@@ -37,6 +37,14 @@ namespace WebApplicationAssessment.Controllers
         {
             if (ModelState.IsValid)
             {
+                bool exists = await _empRepository.EmployeeExistsAsync(model.FirstName, model.LastName, model.DateOfBirth, model.Phone);
+                if (exists)
+                {
+                    ViewBag.DuplicateMessage = "An employee with the same Phone Number or Personal Details (First Name, Last Name, Date of Birth) already exists.";
+                    model.AvailableSkills = await GetAvailableSkillsAsync();
+                    return View(model);
+                }
+
                 var employee = new Employee
                 {
                     FirstName = model.FirstName,
@@ -82,6 +90,14 @@ namespace WebApplicationAssessment.Controllers
 
             if (ModelState.IsValid)
             {
+                bool exists = await _empRepository.EmployeeExistsAsync(model.FirstName, model.LastName, model.DateOfBirth, model.Phone, model.Id);
+                if (exists)
+                {
+                    ViewBag.DuplicateMessage = "Another employee with the same Phone Number or Personal Details (First Name, Last Name, Date of Birth) already exists.";
+                    model.AvailableSkills = await GetAvailableSkillsAsync();
+                    return View(model);
+                }
+
                 var employeeToUpdate = await _empRepository.GetEmployeeByIdAsync(id);
                 if (employeeToUpdate == null) return NotFound();
 

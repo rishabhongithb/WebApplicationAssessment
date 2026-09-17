@@ -10,6 +10,6 @@ namespace WebApplicationAssessment.Repositories
         Task AddEmployeeAsync(Employee employee, IEnumerable<int> selectedSkillIds);
         Task UpdateEmployeeAsync(Employee employee, IEnumerable<int> selectedSkillIds);
         Task DeleteEmployeeAsync(int id);
-        bool EmployeeExists(int id);
+        Task<bool> EmployeeExistsAsync(string firstName, string lastName, DateTime dateOfBirth, string phone, int excludeId = 0);
     }
 }

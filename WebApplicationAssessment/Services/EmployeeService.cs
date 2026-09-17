@@ -66,9 +66,12 @@ namespace WebApplicationAssessment.Services
             }
         }
 
-        public bool EmployeeExists(int id)
+        public async Task<bool> EmployeeExistsAsync(string firstName, string lastName, DateTime dateOfBirth, string phone, int excludeId = 0)
         {
-            return _context.Employees.Any(e => e.Id == id);
+            return await _context.Employees.AnyAsync(e =>
+                    e.Id != excludeId && (
+                    e.Phone.Trim() == phone.Trim() && e.DateOfBirth.Date == dateOfBirth.Date
+            ));
         }
     }
 }
